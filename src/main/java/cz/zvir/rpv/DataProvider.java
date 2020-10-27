@@ -6,13 +6,10 @@ import javafx.scene.image.Image;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
-import java.util.Set;
 
 class DataProvider {
 	private static final DataProvider ourInstance = new DataProvider();
@@ -21,7 +18,6 @@ class DataProvider {
 		return ourInstance;
 	}
 
-	private List<File> pictureList;
 	private ListIterator<File> pictureIterator;
 	private File currentFile = null;
 
@@ -30,30 +26,27 @@ class DataProvider {
 	}
 
 	boolean openFolder(File inputDirectory) {
-		final Set<String> picturesExtensions = new HashSet<>();
-		Collections.addAll(picturesExtensions, ".jpg", ".jpeg", ".png", ".gif");
-
-		File[] pictureDir = inputDirectory.listFiles((dir, name) -> {
+		final List<String> supportedExtensions = List.of(".jpg", ".jpeg", ".png", ".gif");
+		final List<File> pictureFiles = new ArrayList<>();
+		for (final var file : Objects.requireNonNull(inputDirectory.listFiles())) {
 			try {
-				name = name.toLowerCase().substring(name.lastIndexOf('.'));
-			} catch (Exception ignored) {
-				System.err.println("Error on file/dir: " + name);
+				if (!file.getName().contains(".")) {
+					continue;
+				}
+				if (supportedExtensions.contains(file.getName().toLowerCase().substring(file.getName().lastIndexOf('.')))) {
+					pictureFiles.add(file);
+				}
+			} catch (Exception e) {
+				System.err.println("File " + file.getName() + " ignored!");
 			}
-			return picturesExtensions.contains(name);
-		});
-
-		if (pictureDir != null) {
-			pictureList = new ArrayList<>(Arrays.asList(pictureDir));
-			Collections.shuffle(pictureList);
 		}
-
-		pictureIterator = pictureList.listIterator();
-		if (pictureList.isEmpty()) {
-			Controller.showAlert(Alert.AlertType.ERROR, "Error", "No files in this directory!", "Try a different directory.");
+		if (pictureFiles.isEmpty()) {
+			Controller.showAlert(Alert.AlertType.ERROR, "Error", "No files in this directory!", "Please try a different directory.");
 			return false;
-		} else {
-			return true;
 		}
+		Collections.shuffle(pictureFiles);
+		this.pictureIterator = pictureFiles.listIterator();
+		return true;
 	}
 
 	Image getImage(Direction direction, double width, double height) {

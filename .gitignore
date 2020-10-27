@@ -14,5 +14,4 @@ out/*
 *.rar
 hs_err_pid*
 .gradle/*
-build.gradle
 build/*
